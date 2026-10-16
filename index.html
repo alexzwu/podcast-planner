@@ -102,7 +102,17 @@
       <div><div class="n" id="stPub">0</div><div class="l">published</div></div>
       <div><div class="n" id="stPipe">0</div><div class="l">in pipeline</div></div>
     </div>
+    <div id="syncLbl" style="margin-top:8px; font-size:12px; opacity:.85"></div>
   </header>
+
+  <div class="card" id="lockbar" style="display:none; border-color:var(--accent);">
+    <div class="sec-t">🔒 Sync locked</div>
+    <div class="muted" style="margin-bottom:8px; font-size:13.5px">Enter the family passphrase to sync this planner across browsers.</div>
+    <div style="display:flex; gap:8px">
+      <input id="ppInput" type="password" placeholder="Passphrase" style="flex:1;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:14px">
+      <button class="btn small" id="ppSave">Unlock</button>
+    </div>
+  </div>
 
   <div class="tabs">
     <button class="tab active" data-view="episodes">Episodes</button>
@@ -138,7 +148,7 @@
   <p><b>Episodes</b> move through a pipeline: <b>Idea → Outreach → Scheduled → Recorded → Editing → Published</b>. Tap an episode to open it, and change its stage from the dropdown inside.</p>
   <p>The <b>+</b> button adds an episode. <b>Ideas</b> is a scratch pad for topics — "Make episode" promotes an idea into the pipeline.</p>
   <p>Inside an episode you can track the <b>guest</b> (contact details stay on this device), log every <b>outreach</b> touch, plan the <b>recording</b>, build the <b>outline</b> from segment blocks, keep <b>research notes</b>, and tick off the <b>publish checklist</b>. Paste the <b>Spotify link</b> once the episode is live.</p>
-  <p>Everything saves automatically on this device. Nothing is uploaded anywhere.</p>
+  <p>Everything saves automatically on this device. If sync is enabled, a 🔒 bar appears at the top — unlock it with the family passphrase to sync across browsers.</p>
   </div>
   <div style="margin-top:12px"><button class="btn" id="helpClose">Got it</button></div>
 </dialog>
@@ -157,6 +167,10 @@
 "use strict";
 const LS="wht-planner-v1";
 const EP1_URL="https://open.spotify.com/episode/71oTF605quq4w1QHPZEGw2?si=84a85a0d208b4964";
+/* Cross-browser sync: set to the deployed Worker URL to enable, e.g.
+   "https://wht-planner-sync.<account>.workers.dev". Empty = this device only. */
+const SYNC_URL="https://wht-planner-sync.alexzwu.workers.dev";
+const PP_KEY="wht-pp";
 const STAGES=[["idea","Idea"],["outreach","Outreach"],["scheduled","Scheduled"],
   ["recorded","Recorded"],["editing","Editing"],["published","Published"]];
 const STAGE_LBL=Object.fromEntries(STAGES);
@@ -189,7 +203,61 @@ else{
   const ep1=S.episodes.find(e=>e.num===1&&!e.spotify);
   if(ep1) ep1.spotify=EP1_URL;
 }
-function save(){ localStorage.setItem(LS,JSON.stringify(S)); }
+function touch(){ S._meta=S._meta||{}; S._meta.updatedAt=Date.now(); }
+function saveLocal(){ touch(); try{ localStorage.setItem(LS,JSON.stringify(S)); }catch(e){} }
+function save(){ saveLocal(); Sync.push(); }
+/* ---------- optional cross-browser sync (private Worker + KV) ---------- */
+const Sync={
+  url:SYNC_URL, pass:null, _t:null,
+  setStatus(s){
+    const map={local:"On this device only",synced:"Synced ✓",syncing:"Syncing…",
+      offline:"Offline — saved on this device",locked:"Locked 🔒"};
+    const el=$("syncLbl"); if(el) el.textContent=map[s]||s;
+    const bar=$("lockbar"); if(bar) bar.style.display=(s==="locked")?"":"none";
+  },
+  async init(){
+    if(!this.url){ this.setStatus("local"); return; }
+    try{ this.pass=localStorage.getItem(PP_KEY); }catch(e){}
+    if(!this.pass){ this.setStatus("locked"); return; }
+    await this.pull();
+  },
+  unlock(p){
+    this.pass=p;
+    try{ localStorage.setItem(PP_KEY,p); }catch(e){}
+    this.pull();
+  },
+  push(){
+    if(!this.url||!this.pass) return;
+    clearTimeout(this._t);
+    this._t=setTimeout(()=>this._doPush(),1200);
+  },
+  async _doPush(){
+    this.setStatus("syncing");
+    try{
+      const r=await fetch(this.url+"/state",{method:"PUT",
+        headers:{"Content-Type":"application/json","X-Passphrase":this.pass},
+        body:JSON.stringify(S)});
+      if(r.status===401){ this.setStatus("locked"); return; }
+      if(!r.ok) throw new Error("push failed");
+      this.setStatus("synced");
+    }catch(e){ this.setStatus("offline"); }
+  },
+  async pull(){
+    if(!this.url||!this.pass){ this.setStatus(this.url?"locked":"local"); return; }
+    this.setStatus("syncing");
+    try{
+      const r=await fetch(this.url+"/state",{headers:{"X-Passphrase":this.pass}});
+      if(r.status===401){ this.setStatus("locked"); return; }
+      if(!r.ok) throw new Error("pull failed");
+      const remote=await r.json();
+      const ru=remote&&remote._meta?(remote._meta.updatedAt||0):0;
+      const lu=S._meta?(S._meta.updatedAt||0):0;
+      if(remote&&Array.isArray(remote.episodes)&&ru>lu){ S=remote; saveLocal(); render(); }
+      this.setStatus("synced");
+    }catch(e){ this.setStatus("offline"); }
+  }
+};
+
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const todayISO=()=>new Date().toISOString().slice(0,10);
@@ -312,6 +380,10 @@ document.addEventListener("click",e=>{
   if(el.id==="fab"){ $("newTitle").value=""; $("newGuest").value=""; $("epDlg").showModal(); return; }
   if(el.id==="helpBtn"){ $("helpDlg").showModal(); return; }
   if(el.id==="helpClose"){ $("helpDlg").close(); return; }
+  if(el.id==="ppSave"){
+    const v=$("ppInput").value; if(!v){ $("ppInput").focus(); return; }
+    $("ppInput").value=""; Sync.unlock(v); return;
+  }
   if(el.id==="epCancel"){ $("epDlg").close(); return; }
   if(el.id==="epCreate"){
     const n=Math.max(0,...S.episodes.map(x=>x.num))+1;
@@ -368,6 +440,7 @@ document.addEventListener("input",e=>{
 });
 
 render();
+Sync.init();
 </script>
 </body>
 </html>
