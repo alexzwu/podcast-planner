@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c2d12">
+<title>Women's Heart Talk — Episode Planner</title>
+<style>
+  :root{
+    --bg:#fdf8f5; --card:#ffffff; --ink:#2b1a12; --muted:#8a7364;
+    --accent:#c2410c; --accent-soft:#fdeede; --good:#15803d; --good-soft:#e2f4e8;
+    --line:#f0e2d6; --radius:14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.45; padding-bottom:72px;}
+  .wrap{max-width:760px; margin:0 auto; padding:16px 14px 0;}
+  header.hero{background:linear-gradient(135deg,#7c2d12,#c2410c); color:#fff; border-radius:18px;
+    padding:22px 20px 18px; margin-bottom:14px; box-shadow:0 6px 18px rgba(124,45,18,.25);}
+  header.hero h1{margin:0 0 2px; font-size:21px;}
+  header.hero .sub{opacity:.85; font-size:13.5px;}
+  .stats{display:flex; gap:14px; margin-top:12px;}
+  .stats .n{font-size:26px; font-weight:800; line-height:1;}
+  .stats .l{font-size:12px; opacity:.85;}
+  .tabs{display:flex; gap:8px; margin-bottom:12px;}
+  .tab{flex:1; border:1px solid var(--line); background:#fff; border-radius:12px;
+    padding:10px; font-size:14px; font-weight:700; color:var(--muted); cursor:pointer; text-align:center;}
+  .tab.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .filters{display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; padding-bottom:4px;}
+  .fchip{flex:none; border:1px solid var(--line); background:#fff; border-radius:99px;
+    padding:6px 12px; font-size:13px; color:var(--muted); cursor:pointer;}
+  .fchip.active{background:var(--ink); border-color:var(--ink); color:#fff;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px; margin-bottom:10px;}
+  .ep-head{display:flex; justify-content:space-between; gap:10px; align-items:flex-start; cursor:pointer;}
+  .ep-num{font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px;}
+  .ep-title{font-size:16.5px; font-weight:700; margin:2px 0;}
+  .stage{flex:none; font-size:11.5px; font-weight:700; border-radius:99px; padding:3px 11px; white-space:nowrap;}
+  .st-idea{background:#f1f5f9; color:#475569;}
+  .st-outreach{background:var(--accent-soft); color:var(--accent);}
+  .st-scheduled{background:#e0e7ff; color:#3730a3;}
+  .st-recorded{background:#fef3c7; color:#92400e;}
+  .st-editing{background:#fce7f3; color:#9d174d;}
+  .st-published{background:var(--good-soft); color:var(--good);}
+  .ep-detail{margin-top:12px; border-top:1px solid var(--line); padding-top:12px; display:none;}
+  .ep-detail.open{display:block;}
+  .sec{margin-bottom:14px;}
+  .sec-t{font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px;}
+  .field{margin-bottom:8px;}
+  .field label{display:block; font-size:12.5px; color:var(--muted); margin-bottom:3px;}
+  .field input, .field select, .field textarea{
+    width:100%; border:1px solid var(--line); border-radius:9px; padding:8px 10px;
+    font-size:14.5px; font-family:inherit; background:#fff; color:var(--ink);}
+  .field textarea{min-height:70px; resize:vertical;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .log{font-size:13.5px; padding:7px 0; border-top:1px dashed var(--line);}
+  .log .d{font-weight:700;}
+  .log .t{color:var(--muted); font-size:12px;}
+  .segrow{display:flex; gap:8px; align-items:center; margin-bottom:6px;}
+  .segrow input:first-child{flex:1;}
+  .segrow input:last-of-type{width:70px;}
+  .xbtn{background:none; border:none; color:#b91c1c; font-size:18px; cursor:pointer; padding:4px 8px;}
+  .btn{display:inline-block; border:1px solid var(--accent); background:var(--accent); color:#fff;
+    border-radius:10px; padding:9px 15px; font-size:14px; cursor:pointer; font-weight:600;}
+  .btn.ghost{background:#fff; color:var(--accent);}
+  .btn.small{padding:6px 11px; font-size:13px;}
+  .btn.danger{background:#fff; color:#b91c1c; border-color:#f0b4b4;}
+  .check{display:flex; align-items:center; gap:9px; padding:6px 0; font-size:14px;}
+  .check input{width:19px; height:19px; accent-color:var(--good);}
+  .check.done span{color:var(--muted); text-decoration:line-through;}
+  .fab{position:fixed; bottom:20px; right:20px; width:58px; height:58px; border-radius:50%;
+    background:var(--accent); color:#fff; border:none; font-size:30px; cursor:pointer;
+    box-shadow:0 6px 18px rgba(194,65,12,.4);}
+  .foot{text-align:center; font-size:12px; color:var(--muted); margin-top:20px;}
+  .foot button{background:none; border:none; color:var(--muted); text-decoration:underline; font-size:12px; cursor:pointer;}
+  dialog{border:1px solid var(--line); border-radius:14px; padding:20px; max-width:380px; width:92vw;}
+  dialog::backdrop{background:rgba(0,0,0,.35);}
+  dialog h3{margin-top:0;}
+  .muted{color:var(--muted); font-size:13px;}
+  a.sp{color:var(--accent); font-size:13.5px; word-break:break-all;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1>Women's Heart Talk</h1>
+    <div class="sub">Episode planner — pipeline, guests, outlines, publishing</div>
+    <div class="stats">
+      <div><div class="n" id="stTotal">0</div><div class="l">episodes</div></div>
+      <div><div class="n" id="stPub">0</div><div class="l">published</div></div>
+      <div><div class="n" id="stPipe">0</div><div class="l">in pipeline</div></div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-view="episodes">Episodes</button>
+    <button class="tab" data-view="ideas">Ideas</button>
+  </div>
+
+  <div id="epView">
+    <div class="filters" id="stageFilters"></div>
+    <div id="epList"></div>
+  </div>
+
+  <div id="ideaView" style="display:none">
+    <div class="card">
+      <div class="sec-t">New idea</div>
+      <div class="field"><input id="ideaTitle" placeholder="Episode idea in a few words"></div>
+      <div class="field"><textarea id="ideaNotes" placeholder="Why this topic, who could speak to it…"></textarea></div>
+      <button class="btn small" id="ideaAdd">Add idea</button>
+    </div>
+    <div id="ideaList"></div>
+  </div>
+
+  <div class="foot">
+    Everything saves on this device only — guest contact details never leave your phone.<br>
+    <button id="resetBtn">Reset all planner data</button>
+  </div>
+</div>
+
+<button class="fab" id="fab" title="Add episode">+</button>
+
+<dialog id="epDlg">
+  <h3>New episode</h3>
+  <div class="field"><label>Working title</label><input id="newTitle" placeholder="e.g. Heart failure in young women"></div>
+  <div class="field"><label>Guest (optional for now)</label><input id="newGuest" placeholder="Name"></div>
+  <div style="display:flex; gap:8px; margin-top:12px">
+    <button class="btn" id="epCreate">Create</button>
+    <button class="btn ghost" id="epCancel">Cancel</button>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+const LS="wht-planner-v1";
+const STAGES=[["idea","Idea"],["outreach","Outreach"],["scheduled","Scheduled"],
+  ["recorded","Recorded"],["editing","Editing"],["published","Published"]];
+const STAGE_LBL=Object.fromEntries(STAGES);
+const CHECKS=[["edited","Audio edited"],["shownotes","Show notes written"],["art","Cover art ready"],
+  ["uploaded","Uploaded to Spotify"],["promo","Promo posted"]];
+const SEG_TPL=["Cold open","Guest intro","Main conversation","Rapid fire","Takeaways","Close"];
+
+function blankEp(n){
+  return {id:"e"+Date.now()+Math.floor(Math.random()*999), num:n, title:"", stage:"idea",
+    guest:{name:"",role:"",affil:"",contact:"",source:""},
+    outreach:[], recDate:"", duration:"", format:"Remote",
+    segments:[], notes:"", checks:{}, spotify:""};
+}
+function seed(){
+  const e=blankEp(1);
+  e.title="Women's Heart Talk — Episode 1";
+  e.stage="published";
+  e.guest={name:"Dr. Jennifer Williams",role:"Researcher",affil:"Wilfrid Laurier University",contact:"",source:""};
+  e.recDate=""; e.duration="23"; e.format="Remote";
+  e.checks={edited:true,shownotes:true,art:true,uploaded:true,promo:false};
+  e.notes="First episode — released Sep 4, 2026.";
+  return {episodes:[e], ideas:[], filter:"all", view:"episodes", open:null};
+}
+let S;
+try{ S=JSON.parse(localStorage.getItem(LS)||"null"); }catch(e){ S=null; }
+if(!S||!Array.isArray(S.episodes)) S=seed();
+function save(){ localStorage.setItem(LS,JSON.stringify(S)); }
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const todayISO=()=>new Date().toISOString().slice(0,10);
+
+function render(){
+  const eps=S.episodes;
+  $("stTotal").textContent=eps.length;
+  $("stPub").textContent=eps.filter(e=>e.stage==="published").length;
+  $("stPipe").textContent=eps.filter(e=>e.stage!=="published").length;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.view===S.view));
+  $("epView").style.display=S.view==="episodes"?"":"none";
+  $("ideaView").style.display=S.view==="ideas"?"":"none";
+  renderFilters(); renderEps(); renderIdeas();
+}
+function renderFilters(){
+  const counts={all:S.episodes.length};
+  STAGES.forEach(([v])=>counts[v]=S.episodes.filter(e=>e.stage===v).length);
+  $("stageFilters").innerHTML=
+    `<button class="fchip ${S.filter==="all"?"active":""}" data-f="all">All (${counts.all})</button>`+
+    STAGES.filter(([v])=>counts[v]>0||v===S.filter).map(([v,l])=>
+      `<button class="fchip ${S.filter===v?"active":""}" data-f="${v}">${l} (${counts[v]})</button>`).join("");
+}
+function epById(id){ return S.episodes.find(e=>e.id===id); }
+
+function renderEps(){
+  const list=S.episodes.filter(e=>S.filter==="all"||e.stage===S.filter)
+    .sort((a,b)=>a.num-b.num);
+  $("epList").innerHTML=list.map(e=>{
+    const open=S.open===e.id;
+    const g=e.guest||{};
+    const gLine=[g.name,g.role,g.affil].filter(Boolean).join(" · ");
+    const nSeg=(e.segments||[]).length, nLog=(e.outreach||[]).length;
+    const nChecks=Object.values(e.checks||{}).filter(Boolean).length;
+    return `<div class="card" data-ep="${e.id}">
+      <div class="ep-head" data-toggle="${e.id}">
+        <div><div class="ep-num">Episode ${e.num}</div>
+          <div class="ep-title">${esc(e.title)||'<span class="muted">Untitled episode</span>'}</div>
+          <div class="muted" style="font-size:13px">${esc(gLine)}${e.recDate?" · 🎙 "+esc(e.recDate):""}</div>
+          <div class="muted" style="font-size:12px">${nSeg} segments · ${nLog} outreach notes · ${nChecks}/${CHECKS.length} publish checks</div>
+        </div>
+        <span class="stage st-${e.stage}">${STAGE_LBL[e.stage]}</span>
+      </div>
+      <div class="ep-detail ${open?"open":""}">
+        <div class="sec"><div class="sec-t">Basics</div>
+          <div class="field"><label>Working title</label><input data-k="title" data-ep="${e.id}" value="${esc(e.title)}"></div>
+          <div class="grid2">
+            <div class="field"><label>Stage</label><select data-k="stage" data-ep="${e.id}">
+              ${STAGES.map(([v,l])=>`<option value="${v}" ${e.stage===v?"selected":""}>${l}</option>`).join("")}
+            </select></div>
+            <div class="field"><label>Recording date</label><input type="date" data-k="recDate" data-ep="${e.id}" value="${esc(e.recDate)}"></div>
+            <div class="field"><label>Target length (min)</label><input type="number" min="1" data-k="duration" data-ep="${e.id}" value="${esc(e.duration)}"></div>
+            <div class="field"><label>Format</label><select data-k="format" data-ep="${e.id}">
+              ${["Remote","In person"].map(f=>`<option ${e.format===f?"selected":""}>${f}</option>`).join("")}
+            </select></div>
+          </div>
+          ${e.stage==="published"?`<div class="field"><label>Spotify episode link</label><input data-k="spotify" data-ep="${e.id}" value="${esc(e.spotify)}" placeholder="https://open.spotify.com/episode/…"></div>
+          ${e.spotify?`<a class="sp" href="${esc(e.spotify)}">Open on Spotify ↗</a>`:""}`:""}
+        </div>
+        <div class="sec"><div class="sec-t">Guest</div>
+          <div class="grid2">
+            <div class="field"><label>Name</label><input data-g="name" data-ep="${e.id}" value="${esc(g.name)}"></div>
+            <div class="field"><label>Role / title</label><input data-g="role" data-ep="${e.id}" value="${esc(g.role)}"></div>
+            <div class="field"><label>Affiliation</label><input data-g="affil" data-ep="${e.id}" value="${esc(g.affil)}"></div>
+            <div class="field"><label>Contact (stays on this device)</label><input data-g="contact" data-ep="${e.id}" value="${esc(g.contact)}"></div>
+          </div>
+          <div class="field"><label>How found</label><input data-g="source" data-ep="${e.id}" value="${esc(g.source)}" placeholder="e.g. university news article"></div>
+        </div>
+        <div class="sec"><div class="sec-t">Outreach log</div>
+          <div id="log-${e.id}">${(e.outreach||[]).map((o,i)=>
+            `<div class="log"><span class="d">${esc(o.date)}</span> — ${esc(o.text)}
+             <button class="xbtn" data-dellog="${e.id}:${i}" title="Delete">×</button></div>`).join("")||'<div class="muted">No outreach yet.</div>'}
+          </div>
+          <div style="display:flex; gap:6px; margin-top:6px">
+            <input id="logt-${e.id}" placeholder="Emailed intro + one-pager…" style="flex:1;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:14px">
+            <button class="btn small ghost" data-addlog="${e.id}">Log</button>
+          </div>
+        </div>
+        <div class="sec"><div class="sec-t">Episode outline <span style="font-weight:400;text-transform:none;letter-spacing:0">(structure only — your words stay yours)</span></div>
+          <div id="seg-${e.id}">${(e.segments||[]).map((s,i)=>
+            `<div class="segrow"><input data-seg="${e.id}:${i}:label" value="${esc(s.label)}" placeholder="Segment">
+             <input type="number" min="1" data-seg="${e.id}:${i}:mins" value="${esc(s.mins)}" placeholder="min">
+             <button class="xbtn" data-delseg="${e.id}:${i}" title="Remove">×</button></div>`).join("")}
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px">
+            <button class="btn small ghost" data-addseg="${e.id}">+ Segment</button>
+            ${SEG_TPL.map(t=>`<button class="btn small ghost" data-tplseg="${e.id}" data-t="${esc(t)}">${esc(t)}</button>`).join("")}
+          </div>
+        </div>
+        <div class="sec"><div class="sec-t">Research notes</div>
+          <div class="field"><textarea data-k="notes" data-ep="${e.id}" placeholder="What the guest works on, key papers, angles to explore…">${esc(e.notes)}</textarea></div>
+        </div>
+        <div class="sec"><div class="sec-t">Publish checklist</div>
+          ${CHECKS.map(([k,l])=>`<label class="check ${(e.checks||{})[k]?"done":""}">
+            <input type="checkbox" data-chk="${e.id}:${k}" ${(e.checks||{})[k]?"checked":""}>
+            <span>${l}</span></label>`).join("")}
+        </div>
+        <button class="btn small danger" data-delep="${e.id}">Delete episode</button>
+      </div>
+    </div>`;
+  }).join("")||'<div class="card muted">No episodes in this stage yet.</div>';
+}
+
+function renderIdeas(){
+  $("ideaList").innerHTML=S.ideas.map(w=>
+    `<div class="card"><div class="ep-head" style="cursor:default">
+      <div><div class="ep-title" style="font-size:15px">${esc(w.title)}</div>
+      <div class="muted" style="font-size:13px">${esc(w.notes)}</div></div></div>
+      <div style="margin-top:8px; display:flex; gap:8px">
+        <button class="btn small" data-promote="${w.id}">Make episode</button>
+        <button class="btn small danger" data-delidea="${w.id}">Delete</button>
+      </div></div>`).join("")||'<div class="card muted">No ideas yet — capture them here before they fade.</div>';
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{
+  const el=e.target, d=el.dataset;
+  if(el.classList.contains("tab")){ S.view=el.dataset.view; save(); render(); return; }
+  if(d.f){ S.filter=d.f; save(); render(); return; }
+  if(d.toggle){ S.open=S.open===d.toggle?null:d.toggle; save(); render(); return; }
+  if(el.id==="fab"){ $("newTitle").value=""; $("newGuest").value=""; $("epDlg").showModal(); return; }
+  if(el.id==="epCancel"){ $("epDlg").close(); return; }
+  if(el.id==="epCreate"){
+    const n=Math.max(0,...S.episodes.map(x=>x.num))+1;
+    const ep=blankEp(n);
+    ep.title=$("newTitle").value.trim(); ep.guest.name=$("newGuest").value.trim();
+    S.episodes.push(ep); S.open=ep.id; S.filter="all";
+    save(); $("epDlg").close(); render(); return;
+  }
+  if(el.id==="ideaAdd"){
+    const t=$("ideaTitle").value.trim(); if(!t) return;
+    S.ideas.push({id:"w"+Date.now(), title:t, notes:$("ideaNotes").value.trim()});
+    $("ideaTitle").value=""; $("ideaNotes").value="";
+    save(); render(); return;
+  }
+  if(d.promote){
+    const w=S.ideas.find(x=>x.id===d.promote);
+    const n=Math.max(0,...S.episodes.map(x=>x.num))+1;
+    const ep=blankEp(n); ep.title=w.title; ep.notes=w.notes;
+    S.episodes.push(ep); S.ideas=S.ideas.filter(x=>x.id!==d.promote);
+    S.view="episodes"; S.open=ep.id; save(); render(); return;
+  }
+  if(d.delidea&&confirm("Delete this idea?")){ S.ideas=S.ideas.filter(x=>x.id!==d.delidea); save(); render(); return; }
+  if(d.delep&&confirm("Delete this episode and all its data?")){
+    S.episodes=S.episodes.filter(x=>x.id!==d.delep); save(); render(); return; }
+  if(d.addlog){
+    const ep=epById(d.addlog), inp=$("logt-"+d.addlog), t=inp.value.trim(); if(!t) return;
+    ep.outreach.push({date:todayISO(),text:t}); save(); render(); return; }
+  if(d.dellog){ const [id,i]=d.dellog.split(":");
+    epById(id).outreach.splice(+i,1); save(); render(); return; }
+  if(d.addseg){ const ep=epById(d.addseg);
+    ep.segments.push({label:"",mins:""}); save(); render(); return; }
+  if(d.tplseg){ const ep=epById(d.tplseg);
+    ep.segments.push({label:el.dataset.t,mins:""}); save(); render(); return; }
+  if(d.delseg){ const [id,i]=d.delseg.split(":");
+    epById(id).segments.splice(+i,1); save(); render(); return; }
+  if(el.id==="resetBtn"&&confirm("Reset ALL planner data?")){
+    S=seed(); save(); render(); return; }
+});
+document.addEventListener("change",e=>{
+  const el=e.target, d=el.dataset;
+  if(d.k){ epById(d.ep)[d.k]=el.value; save();
+    if(d.k==="stage") render(); return; }
+  if(d.g){ const ep=epById(d.ep); ep.guest[d.g]=el.value; save(); return; }
+  if(d.chk){ const [id,k]=d.chk.split(":");
+    const ep=epById(id); ep.checks=ep.checks||{}; ep.checks[k]=el.checked; save(); render(); return; }
+  if(d.seg){ const [id,i,f]=d.seg.split(":");
+    epById(id).segments[+i][f]=el.value; save(); return; }
+});
+document.addEventListener("input",e=>{
+  const el=e.target, d=el.dataset;
+  if(d.k&&d.k!=="stage"){ epById(d.ep)[d.k]=el.value; save(); }
+  else if(d.g){ epById(d.ep).guest[d.g]=el.value; save(); }
+  else if(d.seg){ const [id,i,f]=d.seg.split(":"); epById(id).segments[+i][f]=el.value; save(); }
+});
+
+render();
+</script>
+</body>
+</html>
